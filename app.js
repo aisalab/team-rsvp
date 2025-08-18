@@ -1,10 +1,26 @@
 // ====== 設定 ======
-const LIFF_ID   = 'https://miniapp.line.me/2007941730-gGwPVonW'; // ← ミニアプリID（=LIFF ID）に置き換え
+const LIFF_ID   = '2007941730-gGwPVonW'; // ← ミニアプリID（=LIFF ID）に置き換え
 const TEAM_ID   = new URLSearchParams(location.search).get('team_id') || 'T01';
 const BASE_URL  = 'https://your.api.example.com'; // バックエンドAPI。未用意ならモックが動作
 const TZ        = 'Asia/Tokyo';
 
 // ====== ユーティリティ ======
+// ====== 永続化（localStorage） ======
+const LS_KEYS = {
+  GROUPS: 'rsvp_groups',
+  GROUPS_SELECTED: 'rsvp_groups_selected',
+  STATUS_SELECTED: 'rsvp_status_selected'
+};
+function loadJSON(key, fallback){
+  try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch(e){ return fallback; }
+}
+function saveJSON(key, value){
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch(e){}
+}
+function getMultiSelectValues(sel){
+  return Array.from(sel.selectedOptions).map(o=>o.value);
+}
+
 const $ = (s)=>document.querySelector(s);
 const fmtD = (d)=>d.toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric', timeZone:TZ});
 const fmtT = (d)=>d.toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:TZ});
@@ -17,7 +33,7 @@ function typeLabel(t){ return t==='match'?'試合':t==='practice'?'練習':'イ�
 function escapeHtml(s=''){ return s.replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
 
 // ====== 状態 ======
-let state = {
+let state = { filters: { statuses: loadJSON(LS_KEYS.STATUS_SELECTED, ['yes','maybe']), groups: loadJSON(LS_KEYS.GROUPS_SELECTED, []) }, groups: loadJSON(LS_KEYS.GROUPS, []),
   profile: { displayName: '保護者', userId: 'anonymous' },
   children: [],
   eventsCache: new Map()
@@ -41,6 +57,7 @@ async function init(){
   }
 
   bindUI();
+  initFiltersUI();
   initCalendar();
   await fillChildFilter();
 }
@@ -57,6 +74,70 @@ function bindUI(){
 }
 
 // ====== FullCalendar 初期化 ======
+// ====== フィルタUIの初期化 ======
+function initFiltersUI(){
+  const statusSel = document.getElementById('statusFilter');
+  if(statusSel){
+    Array.from(statusSel.options).forEach(op=>{
+      op.selected = state.filters.statuses.includes(op.value);
+    });
+  }
+  renderGroupOptions();
+  const groupSel = document.getElementById('groupFilter');
+  if(groupSel){
+    Array.from(groupSel.options).forEach(op=>{
+      op.selected = state.filters.groups.includes(op.value);
+    });
+  }
+}
+function renderGroupOptions(){
+  const sel = document.getElementById('groupFilter');
+  if(!sel) return;
+  sel.innerHTML='';
+  state.groups.forEach(g=>{
+    const op=document.createElement('option');
+    op.value=g; op.textContent=g;
+    sel.appendChild(op);
+  });
+}
+function onStatusFilterChange(){
+  const sel = document.getElementById('statusFilter');
+  state.filters.statuses = getMultiSelectValues(sel);
+  saveJSON(LS_KEYS.STATUS_SELECTED, state.filters.statuses);
+  calendar?.refetchEvents();
+}
+function onGroupSelectChange(){
+  const sel = document.getElementById('groupFilter');
+  state.filters.groups = getMultiSelectValues(sel);
+  saveJSON(LS_KEYS.GROUPS_SELECTED, state.filters.groups);
+  calendar?.refetchEvents();
+}
+function onAddGroup(){
+  const name=(prompt('追加するグループ名を入力')||'').trim();
+  if(!name) return;
+  if(!state.groups.includes(name)){
+    state.groups.push(name);
+    saveJSON(LS_KEYS.GROUPS, state.groups);
+    renderGroupOptions();
+    state.filters.groups = Array.from(new Set(state.filters.groups.concat([name])));
+    saveJSON(LS_KEYS.GROUPS_SELECTED, state.filters.groups);
+    initFiltersUI();
+    calendar?.refetchEvents();
+  }
+}
+function onRemoveGroup(){
+  const sel = document.getElementById('groupFilter');
+  const selected = getMultiSelectValues(sel);
+  if(!selected.length) return;
+  state.groups = state.groups.filter(g=>!selected.includes(g));
+  saveJSON(LS_KEYS.GROUPS, state.groups);
+  state.filters.groups = state.filters.groups.filter(g=>!selected.includes(g));
+  saveJSON(LS_KEYS.GROUPS_SELECTED, state.filters.groups);
+  renderGroupOptions();
+  initFiltersUI();
+  calendar?.refetchEvents();
+}
+
 function initCalendar(){
   const el = document.getElementById('fc');
   calendar = new FullCalendar.Calendar(el, {
@@ -119,7 +200,16 @@ async function fetchEvents(info, success, failure){
       state.children = res.children;
       fillChildFilter(true);
     }
-    success(evs.filter(e => (e.extendedProps.my?.status || 'maybe') !== 'no'));
+    const statuses = state.filters.statuses.length ? state.filters.statuses : ['yes','maybe','no'];
+    const groupsSel = state.filters.groups;
+    const filtered = evs.filter(e=>{
+      const st = (e.extendedProps.my?.status || 'maybe');
+      if(!statuses.includes(st)) return false;
+      const grp = e.extendedProps.group || '未分類';
+      if(groupsSel && groupsSel.length>0 && !groupsSel.includes(grp)) return false;
+      return true;
+    });
+    success(filtered);
   } catch (e) {
     console.error(e);
     failure(e);
@@ -243,7 +333,7 @@ function mockEvents(){
   const base = new Date(); base.setHours(9,0,0,0);
   const e=(ofs, type, title, place, yes,no,maybe, my='maybe')=>{
     const s=new Date(base); s.setDate(1+ofs); const e=new Date(s); e.setHours(s.getHours()+2);
-    return { id:`EVT${ofs}`, title, start:s.toISOString(), end:e.toISOString(), place, type,
+    return { id:`EVT${ofs}`, title, start:s.toISOString(), end:e.toISOString(), place, type, group:(ofs%2===0?'A':'B'),
              unansweredCount:maybe, children:[], assignments:[{role:'氷',name:'山田'},{role:'車出し',name:'田中'}],
              summary:{yes,no,maybe}, my:{status:my, note:''} };
   };

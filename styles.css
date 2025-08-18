@@ -36,7 +36,7 @@ select { background:#f8fafc; color:#0f172a; border:1px solid var(--line); paddin
 .fc-ev .title { flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
 dialog { border:none; padding:0; background:transparent; }
-.dialog { width:min(720px, 96vw); background:var(--panel); border:1px solid var(--line); border-radius:16px; margin:auto; padding:0; }
+.dialog { width:min(720px, 90vw); background:var(--panel); border:1px solid var(--line); border-radius:16px; margin:auto; padding:0; }
 .dialog header { display:flex; align-items:center; justify-content:space-between; padding:16px; border-bottom:1px solid var(--line); }
 .dialog header h3 { margin:0; font-size:18px; }
 .dialog header button { background:transparent; border:none; color:var(--muted); font-size:18px; cursor:pointer; }
@@ -71,4 +71,13 @@ textarea { width:100%; resize:vertical; padding:8px; background:#f8fafc; color:v
 .fc-direction-ltr .fc-daygrid-event.fc-event-end, .fc-direction-rtl .fc-daygrid-event.fc-event-start{
 margin-right:0px !important;
 margin-left:0px !important;
+}
+/* Filters (multi-select) */
+.group-filter, .status-filter { display:flex; align-items:flex-start; gap:6px; }
+.group-filter label, .status-filter label { font-size:12px; color:var(--muted); padding-top:6px; }
+#groupFilter, #statusFilter { min-width: 110px; max-width: 160px; }
+.group-actions { display:flex; flex-direction:column; gap:4px; }
+.group-actions button { padding:4px 6px; border:1px solid var(--line); border-radius:6px; background:#f8fafc; }
+@media (max-width: 480px){
+  #groupFilter, #statusFilter { min-width: 90px; max-width: 120px; }
 }

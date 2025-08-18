@@ -26,6 +26,7 @@
     <button id="nextBtn" aria-label="次の月">▶</button>
 
     <div class="filters">
+      <!-- 既存フィルタ -->
       <select id="childFilter" title="子ども">
         <option value="all">全員</option>
       </select>
@@ -35,6 +36,26 @@
         <option value="practice">練習</option>
         <option value="event">イベント</option>
       </select>
+
+      <!-- グループ：複数選択＆編集 -->
+      <div class="group-filter">
+        <label>グループ</label>
+        <select id="groupFilter" multiple size="3" title="グループ（複数選択可）"></select>
+        <div class="group-actions">
+          <button type="button" id="addGroupBtn">＋</button>
+          <button type="button" id="removeGroupBtn">－</button>
+        </div>
+      </div>
+
+      <!-- 出欠：複数選択（デフォルト ○/△） -->
+      <div class="status-filter">
+        <label>表示</label>
+        <select id="statusFilter" multiple size="3" title="出欠（複数選択可）">
+          <option value="yes" selected>◯ 参加</option>
+          <option value="maybe" selected>△ 未定</option>
+          <option value="no">× 欠席</option>
+        </select>
+      </div>
     </div>
   </section>
 
