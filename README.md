@@ -5,7 +5,7 @@
 
 ## ファイル構成
 - `index.html` … 画面本体（LIFF SDKを読み込み）
-- `styles.css` … 見た目
+- `styles.css` … 見た目（ライトテーマ／月曜始まり）
 - `app.js` … ロジック（カレンダー描画・LIFF初期化・RSVP保存など）
 
 ## 使い方（最短）
