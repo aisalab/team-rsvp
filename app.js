@@ -1,5 +1,5 @@
 // ====== 設定 ======
-const LIFF_ID   = 'https://miniapp.line.me/2007941730-gGwPVonW'; // ← ミニアプリID（=LIFF ID）に置き換え
+const LIFF_ID   = '2007941730-gGwPVonW'; // ← ミニアプリID（=LIFF ID）に置き換え
 const TEAM_ID   = new URLSearchParams(location.search).get('team_id') || 'T01';
 const BASE_URL  = 'https://your.api.example.com'; // バックエンドAPI。未用意ならモックが動作
 const TZ        = 'Asia/Tokyo';
@@ -64,9 +64,15 @@ function initCalendar(){
     firstDay: 1,
     locale: 'ja',
     height: 'auto',
-    dayMaxEventRows: 3,
+    dayMaxEventRows: 4,
     fixedWeekCount: true,
     headerToolbar: false,
+    dayHeaderFormat: { day: 'numeric' }, // 日付のみ
+    dayCellContent: (arg) => {
+      // Force numeric-only day number (e.g., "1", not "1日")
+      return { html: String(arg.date.getDate()) };
+    },
+
     datesSet: updateMonthLabel,
     events: fetchEvents,
     eventContent: renderEventContent,
@@ -74,6 +80,10 @@ function initCalendar(){
   });
   calendar.render();
   updateMonthLabel();
+}
+
+dayCellContent: function (e) {
+  e.dayNumberText = e.dayNumberText.replace('日', '');
 }
 
 function updateMonthLabel(){
@@ -115,7 +125,7 @@ async function fetchEvents(info, success, failure){
       state.children = res.children;
       fillChildFilter(true);
     }
-    success(evs);
+    success(evs.filter(e => (e.extendedProps.my?.status || 'maybe') !== 'no'));
   } catch (e) {
     console.error(e);
     failure(e);
@@ -123,14 +133,8 @@ async function fetchEvents(info, success, failure){
 }
 
 function renderEventContent(arg){
-  const my = arg.event.extendedProps.my || {};
-  const icon = my.status==='yes'?'○':my.status==='no'?'×':my.status==='maybe'?'△':'';
-  const timeText = arg.event.start ? FullCalendar.formatDate(arg.event.start, { hour:'2-digit', minute:'2-digit', hour12:false }) : '';
-  const pieces = [];
-  if (icon) pieces.push(`<span class="myicon">${icon}</span>`);
-  if (timeText) pieces.push(`<span class="time">${timeText}</span>`);
-  pieces.push(`<span class="title">${escapeHtml(arg.event.title)}</span>`);
-  return { html: `<div class="fc-ev">${pieces.join(' ')}</div>` };
+  const title = escapeHtml(arg.event.title || '');
+  return { html: `<div class="fc-ev"><span class="title">${title}</span></div>` };
 }
 
 function handleEventClick(info){
