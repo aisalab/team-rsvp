@@ -1,5 +1,5 @@
 // ====== 設定 ======
-const LIFF_ID   = '2007941730-gGwPVonW'; // ← ミニアプリID（=LIFF ID）に置き換え
+const LIFF_ID   = 'https://miniapp.line.me/2007941730-gGwPVonW'; // ← ミニアプリID（=LIFF ID）に置き換え
 const TEAM_ID   = new URLSearchParams(location.search).get('team_id') || 'T01';
 const BASE_URL  = 'https://your.api.example.com'; // バックエンドAPI。未用意ならモックが動作
 const TZ        = 'Asia/Tokyo';
@@ -67,11 +67,9 @@ function initCalendar(){
     dayMaxEventRows: 4,
     fixedWeekCount: true,
     headerToolbar: false,
-    dayHeaderFormat: { day: 'numeric' }, // 日付のみ
-    dayCellContent: (arg) => {
-      // Force numeric-only day number (e.g., "1", not "1日")
-      return { html: String(arg.date.getDate()) };
-    },
+  	dayCellContent: function(arg){
+	  	return arg.date.getDate();
+	  },
 
     datesSet: updateMonthLabel,
     events: fetchEvents,
@@ -80,10 +78,6 @@ function initCalendar(){
   });
   calendar.render();
   updateMonthLabel();
-}
-
-dayCellContent: function (e) {
-  e.dayNumberText = e.dayNumberText.replace('日', '');
 }
 
 function updateMonthLabel(){
