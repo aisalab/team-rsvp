@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <title>出欠カレンダー</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <script defer src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script defer src="./app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">スポ少 出欠カレンダー</div>
+    <div class="user">
+      <img id="userAvatar" class="avatar" alt="avatar" />
+      <span id="userName"></span>
+    </div>
+  </header>
+
+  <section class="toolbar">
+    <button id="prevBtn" aria-label="前の月">◀</button>
+    <h2 id="monthLabel"></h2>
+    <button id="nextBtn" aria-label="次の月">▶</button>
+
+    <div class="filters">
+      <select id="childFilter">
+        <option value="all">全員</option>
+      </select>
+      <select id="typeFilter">
+        <option value="all">全種別</option>
+        <option value="match">試合</option>
+        <option value="practice">練習</option>
+        <option value="event">イベント</option>
+      </select>
+    </div>
+  </section>
+
+  <section class="calendar" aria-label="月間カレンダー">
+    <div class="weekday">日</div><div class="weekday">月</div><div class="weekday">火</div>
+    <div class="weekday">水</div><div class="weekday">木</div><div class="weekday">金</div><div class="weekday">土</div>
+    <div id="grid" class="grid" role="grid"></div>
+  </section>
+
+  <!-- 詳細モーダル -->
+  <dialog id="eventDialog">
+    <form method="dialog" class="dialog">
+      <header>
+        <h3 id="dTitle">イベント</h3>
+        <button id="closeDialog" value="cancel" aria-label="閉じる">✕</button>
+      </header>
+      <div class="dmeta">
+        <div><strong>日時</strong>：<span id="dDateTime"></span></div>
+        <div><strong>場所</strong>：<a id="dPlaceLink" target="_blank" rel="noreferrer"></a></div>
+        <div><strong>種別</strong>：<span id="dType"></span></div>
+      </div>
+
+      <fieldset class="rsvp">
+        <legend>あなたの出欠</legend>
+        <label><input type="radio" name="rsvp" value="yes"> 参加（○）</label>
+        <label><input type="radio" name="rsvp" value="no"> 欠席（×）</label>
+        <label><input type="radio" name="rsvp" value="maybe"> 未定（△）</label>
+        <textarea id="dNote" rows="2" placeholder="メモ（任意）"></textarea>
+        <button id="saveBtn" class="primary" type="button">保存</button>
+      </fieldset>
+
+      <details class="summary">
+        <summary>出欠サマリを表示</summary>
+        <div id="dSummary"></div>
+        <div id="dAssignments"></div>
+      </details>
+
+      <footer class="actions">
+        <button id="openInChat" type="button">トークに共有</button>
+        <a id="openMaps" class="ghost" target="_blank" rel="noreferrer">地図を開く</a>
+      </footer>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
