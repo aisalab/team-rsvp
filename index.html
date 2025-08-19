@@ -21,21 +21,27 @@
   </header>
 
   <section class="toolbar">
-    <button id="prevBtn" aria-label="前の月">◀</button>
-    <h2 id="monthLabel">—</h2>
-    <button id="nextBtn" aria-label="次の月">▶</button>
+    <div class="toolbar-left">
+      <button id="prevBtn" aria-label="前の月">◀</button>
+      <h2 id="monthLabel">—</h2>
+      <button id="nextBtn" aria-label="次の月">▶</button>
+    </div>
+    <div class="toolbar-icons">
+      <!-- フィルタ（モーダルを開く） -->
+      <button id="filterBtn" class="icon-btn" type="button" aria-label="フィルタ">
+        <!-- funnel icon -->
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+          <path d="M3 4h18l-7 8v6l-4 2v-8L3 4z" fill="currentColor"></path>
+        </svg>
+      </button>
 
-    <div class="filters">
-      <button id="manageGroupsBtn" type="button" title="グループの追加・削除">グループ管理</button>
-      <select id="childFilter" title="子ども">
-        <option value="all">全員</option>
-      </select>
-      <select id="typeFilter" title="種別">
-        <option value="all">全種別</option>
-        <option value="match">試合</option>
-        <option value="practice">練習</option>
-        <option value="event">イベント</option>
-      </select>
+      <!-- 設定（設定メニューを開く） -->
+      <button id="settingsBtn" class="icon-btn" type="button" aria-label="設定">
+        <!-- gear icon -->
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+          <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm8.94-4.46-.92-.53c.06-.33.08-.68.08-1.01s-.02-.68-.08-1.01l.92-.53a1 1 0 0 0 .37-1.37l-1-1.73a1 1 0 0 0-1.28-.43l-1.07.45a7.8 7.8 0 0 0-1.75-1.01l-.16-1.15A1 1 0 0 0 14.1 1h-2.2a1 1 0 0 0-.99.86l-.16 1.15c-.62.24-1.2.56-1.75 1.01l-1.07-.45a1 1 0 0 0-1.28.43l-1 1.73a1 1 0 0 0 .37 1.37l.92.53c-.06.33-.08.68-.08 1.01s.02.68.08 1.01l-.92.53a1 1 0 0 0-.37 1.37l1 1.73a1 1 0 0 0 1.28.43l1.07-.45c.55.45 1.13.77 1.75 1.01l.16 1.15a1 1 0 0 0 .99.86h2.2a1 1 0 0 0 .99-.86l.16-1.15c.62-.24 1.2-.56 1.75-1.01l1.07.45a1 1 0 0 0 1.28-.43l1-1.73a1 1 0 0 0-.37-1.37Z" fill="currentColor"></path>
+        </svg>
+      </button>
     </div>
   </section>
 
@@ -79,25 +85,60 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-  <!-- グループ管理ダイアログ -->
-  <dialog id="groupManager">
+  <!-- 設定メニュー -->
+  <dialog id="settingsDialog">
     <form method="dialog" class="dialog">
       <header>
-        <h3>グループ管理</h3>
-        <button id="closeGroupMgr" value="cancel" aria-label="閉じる">✕</button>
+        <h3>設定</h3>
+        <button id="sdClose" value="cancel" aria-label="閉じる">✕</button>
       </header>
-      <div class="gm-body">
-        <div class="gm-add">
-          <input id="gmInput" type="text" placeholder="新しいグループ名" />
-          <button id="gmAddBtn" type="button" class="primary">追加</button>
-        </div>
-        <ul id="gmList" class="gm-list"></ul>
-        <p class="gm-hint">※ ここで追加・削除したグループは、ツールバーのグループ選択に反映されます</p>
+      <div class="sd-body">
+        <ul class="settings-list">
+          <li>
+            <button type="button" class="settings-item" data-open="#groupDialog">
+              グループ管理を開く
+            </button>
+          </li>
+          <!-- 将来の設定項目もここに追加していけます -->
+          <!-- <li><button type="button" class="settings-item">通知設定</button></li> -->
+        </ul>
       </div>
       <footer class="actions">
         <button value="cancel">閉じる</button>
       </footer>
     </form>
   </dialog>
+
+  <!-- フィルタ選択ダイアログ -->
+  <dialog id="filterDialog">
+    <form method="dialog" class="dialog">
+      <header>
+        <h3>フィルタ</h3>
+        <button id="fdClose" value="cancel" aria-label="閉じる">✕</button>
+      </header>
+      <div class="fd-body">
+        <label class="fd-row">
+          <span>子ども</span>
+          <select id="fdChild">
+            <option value="all">全員</option>
+          </select>
+        </label>
+        <label class="fd-row">
+          <span>種別</span>
+          <select id="fdType">
+            <option value="all">全種別</option>
+            <option value="match">試合</option>
+            <option value="practice">練習</option>
+            <option value="event">イベント</option>
+          </select>
+        </label>
+      </div>
+      <footer class="actions">
+        <button value="cancel">キャンセル</button>
+        <button id="fdApply" class="primary" type="button">適用</button>
+      </footer>
+    </form>
+  </dialog>
+
 </body>
 </html>

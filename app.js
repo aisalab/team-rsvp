@@ -1,7 +1,7 @@
 // ====== 設定 ======
 const LIFF_ID   = 'https://miniapp.line.me/2007941730-gGwPVonW'; // ← ミニアプリID（=LIFF ID）に置き換え
 const TEAM_ID   = new URLSearchParams(location.search).get('team_id') || 'T01';
-const BASE_URL  = 'https://your.api.example.com'; // バックエンドAPI。未用意ならモックが動作
+const BASE_URL  = 'https://miniapp-firestore-api-978580566817.asia-northeast1.run.app'; // バックエンドAPI。未用意ならモックが動作
 const TZ        = 'Asia/Tokyo';
 
 // ====== ユーティリティ ======
@@ -15,6 +15,14 @@ function toast(msg){ const t=$("#toast"); if(!t) return; t.textContent=msg; t.cl
 function labelOf(k){ return k==='yes'?'○':k==='no'?'×':'△'; }
 function typeLabel(t){ return t==='match'?'試合':t==='practice'?'練習':'イベント'; }
 function escapeHtml(s=''){ return s.replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
+
+// const typeSel = $("#fdType");
+// const childSel = $("#fdChild");
+// const type = typeSel ? typeSel.value : 'all';
+// const childId = childSel ? childSel.value : 'all';
+// if (type && type !== 'all') params.append('type', type);
+// if (childId && childId !== 'all') params.append('childId', childId);
+
 
 // ====== 状態 ======
 let state = {
@@ -49,12 +57,11 @@ async function init(){
 function bindUI(){
   $("#prevBtn").addEventListener('click', ()=> calendar?.prev());
   $("#nextBtn").addEventListener('click', ()=> calendar?.next());
-  $("#typeFilter").addEventListener('change', ()=> calendar?.refetchEvents());
-  $("#childFilter").addEventListener('change', ()=> calendar?.refetchEvents());
+  // $("#typeFilter").addEventListener('change', ()=> calendar?.refetchEvents());
+  // $("#childFilter").addEventListener('change', ()=> calendar?.refetchEvents());
   $("#closeDialog").addEventListener('click', ()=>$("#eventDialog").close());
   $("#saveBtn").addEventListener('click', saveRSVP);
   $("#openInChat").addEventListener('click', shareToChat);
-  $("#manageGroupsBtn").addEventListener('click', openGroupManager);
 }
 
 // ====== FullCalendar 初期化 ======
@@ -165,8 +172,14 @@ async function fetchEvents(info, success, failure){
       from: info.startStr,
       to: info.endStr,
     });
-    const type = $("#typeFilter").value;
-    const childId = $("#childFilter").value;
+    // const type = $("#typeFilter").value;
+    // const childId = $("#childFilter").value;
+    const typeSel = $("#fdType");
+    const childSel = $("#fdChild");
+    const type = typeSel?.value || 'all';
+    const childId = childSel?.value || 'all';
+
+
     if (type && type !== 'all') params.append('type', type);
     if (childId && childId !== 'all') params.append('childId', childId);
 
@@ -221,7 +234,10 @@ function handleEventClick(info){
 
 // ====== 子どもフィルタ ======
 async function fillChildFilter(force=false){
-  const select = $("#childFilter");
+  //　const select = $("#childFilter");
+  // 旧: const select = $("#childFilter");
+  const select = $("#fdChild");
+
   if (!force && select.options.length>1) return;
   try {
     const res = await safeFetch(`${BASE_URL}/children?teamId=${TEAM_ID}`);
@@ -332,3 +348,86 @@ function mockFetch(url, options){
   if(u.pathname.includes('/rsvp')) return Promise.resolve({ ok:true });
   return Promise.resolve({});
 }
+
+
+// フィルタモーダル
+$("#filterBtn").addEventListener('click', openFilterDialog);
+$("#fdClose").addEventListener('click', () => $("#filterDialog").close());
+$("#fdApply").addEventListener('click', applyFilters);
+
+function openFilterDialog(){
+  // 現在の選択値をモーダルのセレクトに反映（初回はデフォルトall）
+  const dlg = $("#filterDialog");
+  // 初回は子ども選択肢を埋める
+  if ($("#fdChild").options.length <= 1 && state.children.length) {
+    state.children.forEach(c=>{
+      const op = document.createElement('option');
+      op.value = c.id; op.textContent = c.name;
+      $("#fdChild").appendChild(op);
+    });
+  }
+  if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open','');
+}
+
+function applyFilters(){
+  // 次回fetchで参照できるよう、値はDOMに残す（IDを fdChild/fdType に変更）
+  $("#filterDialog").close();
+  calendar?.refetchEvents();
+  toast('フィルタを適用しました');
+}
+
+
+// // ヘルパ
+// const $ = (q, el=document)=> el.querySelector(q);
+
+// 起動時にイベントをバインド
+function bindIconMenus() {
+  const filterBtn = $("#filterBtn");
+  const settingsBtn = $("#settingsBtn");
+
+  // フィルタ：既存の filterDialog を開く
+  if (filterBtn) {
+    filterBtn.addEventListener('click', () => {
+      const dlg = $("#filterDialog");
+      if (!dlg) return console.warn('filterDialogが見つかりません');
+      if (typeof dlg.showModal === 'function') dlg.showModal();
+      else dlg.setAttribute('open','');
+    });
+  }
+
+  // 設定：settingsDialog を開く
+  if (settingsBtn) {
+    settingsBtn.addEventListener('click', () => {
+      const dlg = $("#settingsDialog");
+      if (!dlg) return console.warn('settingsDialogが見つかりません');
+      if (typeof dlg.showModal === 'function') dlg.showModal();
+      else dlg.setAttribute('open','');
+    });
+  }
+
+  // 設定内の「グループ管理を開く」
+  const sd = $("#settingsDialog");
+  if (sd) {
+    $("#sdClose")?.addEventListener('click', () => sd.close());
+    sd.addEventListener('click', (e) => {
+      const btn = e.target.closest('.settings-item');
+      if (!btn) return;
+      const sel = btn.dataset.open;
+      if (sel) {
+        const target = document.querySelector(sel);
+        if (target) {
+          sd.close();
+          if (typeof target.showModal === 'function') target.showModal();
+          else target.setAttribute('open','');
+        } else {
+          alert(`指定のダイアログが見つかりません: ${sel}`);
+        }
+      }
+    });
+  }
+}
+
+// どこかの初期化の最後で呼び出し
+document.addEventListener('DOMContentLoaded', () => {
+  bindIconMenus();
+});
