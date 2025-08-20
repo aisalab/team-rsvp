@@ -9,7 +9,10 @@
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/locales-all.global.min.js"></script>
-  <script defer src="./app.js"></script>
+  <!-- <script defer src="./app.js"></script> -->
+  <!-- 末尾の app.js 読み込みを削除して、以下に置き換え -->
+  <script type="module" src="./js/main.js"></script>
+
 </head>
 <body>
   <header class="topbar">
@@ -118,6 +121,10 @@
       </header>
       <div class="fd-body">
         <label class="fd-row">
+          <span>グループ</span>
+          <div id="fdGroups" class="fd-groups"></div>
+        </label>
+        <label class="fd-row">
           <span>子ども</span>
           <select id="fdChild">
             <option value="all">全員</option>
@@ -139,6 +146,27 @@
       </footer>
     </form>
   </dialog>
+
+  <!-- グループ管理ダイアログ -->
+  <dialog id="groupDialog">
+    <form method="dialog" class="dialog">
+      <header>
+        <h3>グループ管理</h3>
+        <button id="gdClose" value="cancel" aria-label="閉じる">✕</button>
+      </header>
+      <div class="gm-body">
+        <div class="gm-add">
+          <input id="gmInput" type="text" placeholder="新しいグループ名（例：U12・A班）">
+          <button id="gmAddBtn" type="button">追加</button>
+        </div>
+        <ul id="gmList" class="gm-list"></ul>
+      </div>
+      <footer class="actions">
+        <button value="cancel">閉じる</button>
+      </footer>
+    </form>
+  </dialog>
+
 
 </body>
 </html>

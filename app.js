@@ -23,13 +23,30 @@ function escapeHtml(s=''){ return s.replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&
 // if (type && type !== 'all') params.append('type', type);
 // if (childId && childId !== 'all') params.append('childId', childId);
 
+// === 追加：ローカル保存ヘルパー（後でサーバAPIに差し替え可） ===
+const LS_KEYS = { GROUPS: 'groups', GROUPS_SELECTED: 'groups_selected' };
+const loadJSON = (k, def=[]) => {
+  try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : def; } catch { return def; }
+};
+const saveJSON = (k, v) => localStorage.setItem(k, JSON.stringify(v));
 
 // ====== 状態 ======
+
+// 既存の state に項目を追加 or 初期化直後に上書き
+let state = {
+  profile: { displayName: '保護者', userId: 'anonymous' },
+  children: [],
+  eventsCache: new Map(),
+  groups: loadJSON(LS_KEYS.GROUPS, []),
+  filters: { groups: loadJSON(LS_KEYS.GROUPS_SELECTED, []) }
+};
+
+/* // ====== 状態 ======
 let state = {
   profile: { displayName: '保護者', userId: 'anonymous' },
   children: [],
   eventsCache: new Map()
-};
+}; */
 
 // ====== 起動 ======
 document.addEventListener('DOMContentLoaded', init);
@@ -51,6 +68,15 @@ async function init(){
   bindUI();
   initCalendar();
   await fillChildFilter();
+
+    // === 追加：初回だけデモグループ ===
+  if (!state.groups || state.groups.length === 0) {
+    state.groups = ['A班', 'B班'];
+    saveJSON(LS_KEYS.GROUPS, state.groups);
+    state.filters.groups = ['A班','B班'];
+    saveJSON(LS_KEYS.GROUPS_SELECTED, state.filters.groups);
+  }
+
 }
 
 // ====== UIイベント ======
@@ -62,17 +88,31 @@ function bindUI(){
   $("#closeDialog").addEventListener('click', ()=>$("#eventDialog").close());
   $("#saveBtn").addEventListener('click', saveRSVP);
   $("#openInChat").addEventListener('click', shareToChat);
+  // グループ管理ダイアログを開くたびにセットアップ
+  const gd = document.getElementById('groupDialog');
+  gd?.addEventListener('show', () => { renderGroupManagerList(); });
+  gd?.addEventListener('close', () => { /* 必要なら後片付け */ });
+  document.getElementById('gmAddBtn')?.addEventListener('click', onGmAdd);
 }
 
 // ====== FullCalendar 初期化 ======
 // ====== グループ管理 ======
-function openGroupManager(){
+/* function openGroupManager(){
   const dlg = document.getElementById('groupManager');
   renderGroupManagerList();
   if(typeof dlg.showModal==='function') dlg.showModal(); else dlg.setAttribute('open','');
   document.getElementById('closeGroupMgr').addEventListener('click', ()=> dlg.close(), { once:true });
   document.getElementById('gmAddBtn').addEventListener('click', onGmAdd, { once:true });
+} */
+function openGroupManager(){
+  const dlg = document.getElementById('groupDialog');  // ← groupDialog に変更
+  //renderGroupManagerList();
+  if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open','');
+  document.getElementById('gdClose')?.addEventListener('click', ()=> dlg.close(), { once:true });  // ← gdClose
+  document.getElementById('gmAddBtn')?.addEventListener('click', onGmAdd, { once:true });
+  renderGroupManagerList();
 }
+
 function renderGroupManagerList(){
   const ul = document.getElementById('gmList');
   ul.innerHTML = '';
@@ -96,9 +136,10 @@ function renderGroupManagerList(){
       state.filters.groups = state.filters.groups.map(g=> g===old ? nw : g);
       saveJSON(LS_KEYS.GROUPS, state.groups);
       saveJSON(LS_KEYS.GROUPS_SELECTED, state.filters.groups);
-      renderGroupOptions();
-      initFiltersUI();
+      // renderGroupOptions();
+      // initFiltersUI();
       renderGroupManagerList();
+      renderFilterGroups();
       calendar?.refetchEvents();
     });
   });
@@ -110,9 +151,10 @@ function renderGroupManagerList(){
       state.filters.groups = state.filters.groups.filter(g=> g!==name);
       saveJSON(LS_KEYS.GROUPS, state.groups);
       saveJSON(LS_KEYS.GROUPS_SELECTED, state.filters.groups);
-      renderGroupOptions();
-      initFiltersUI();
+      // renderGroupOptions();
+      // initFiltersUI();
       renderGroupManagerList();
+      // renderFilterGroups();
       calendar?.refetchEvents();
     });
   });
@@ -130,9 +172,10 @@ function onGmAdd(){
     saveJSON(LS_KEYS.GROUPS_SELECTED, state.filters.groups);
   }
   input.value='';
-  renderGroupOptions();
-  initFiltersUI();
+  // renderGroupOptions();
+  // initFiltersUI();
   renderGroupManagerList();
+  renderFilterGroups();
   calendar?.refetchEvents();
 }
 
@@ -194,6 +237,8 @@ async function fetchEvents(info, success, failure){
         extendedProps: {
           place: ev.place,
           type:  ev.type,
+          //group: ev.group ?? "__UNGROUPED__",   // ← 未設定は特別トークンに,
+          group: normalizeGroup(ev.group),
           summary: ev.summary,
           my: ev.my,
           unansweredCount: ev.unansweredCount
@@ -204,7 +249,16 @@ async function fetchEvents(info, success, failure){
       state.children = res.children;
       fillChildFilter(true);
     }
-    success(evs.filter(e => (e.extendedProps.my?.status || 'maybe') !== 'no'));
+    // success(evs.filter(e => (e.extendedProps.my?.status || 'maybe') !== 'no'));
+    // 欠席×は非表示
+    let out = evs.filter(e => (e.extendedProps.my?.status || 'maybe') !== 'no');
+    // グループ選択で絞り込み（未選択＝全件）
+    const sel = state.filters.groups || [];
+    if (sel.length > 0) {
+      out = out.filter(e => sel.includes(e.extendedProps.group));
+    }
+    success(out);
+
   } catch (e) {
     console.error(e);
     failure(e);
@@ -327,7 +381,7 @@ async function safeFetch(url, options={}){
   }
 }
 
-function mockEvents(){
+/* function mockEvents(){
   const base = new Date(); base.setHours(9,0,0,0);
   const e=(ofs, type, title, place, yes,no,maybe, my='maybe')=>{
     const s=new Date(base); s.setDate(1+ofs); const e=new Date(s); e.setHours(s.getHours()+2);
@@ -340,7 +394,24 @@ function mockEvents(){
            e(15,'event','保護者会','クラブハウス',9,3,1,'no'),
            e(-1,'practice','前月末 練習','学校G',3,1,0,'yes'),
            e(32,'match','翌月 初戦','陸上競技場',2,0,1,'maybe') ];
+} */
+function mockEvents(){
+  const base = new Date(); base.setHours(9,0,0,0);
+  const e=(ofs, type, title, place, yes,no,maybe, my='maybe', group='A班')=>{
+    const s=new Date(base); s.setDate(1+ofs); const e=new Date(s); e.setHours(s.getHours()+2);
+    return { id:`EVT${ofs}`, title, start:s.toISOString(), end:e.toISOString(), place, type, group,
+             unansweredCount:maybe, children:[], assignments:[{role:'氷',name:'山田'},{role:'車出し',name:'田中'}],
+             summary:{yes,no,maybe}, my:{status:my, note:''} };
+  };
+  return [
+    e(3,'match','U12 リーグ第5節','○○市総合G',8,4,3,'yes','A班'),
+    e(10,'practice','全体練習','△△小 学校G',4,2,9,'maybe','B班'),
+    e(15,'event','保護者会','クラブハウス',9,3,1,'no','A班'),
+    e(-1,'practice','前月末 練習','学校G',3,1,0,'yes','B班'),
+    e(32,'match','翌月 初戦','陸上競技場',2,0,1,'maybe','A班')
+  ];
 }
+
 function mockFetch(url, options){
   const u = new URL(url, location.origin);
   if(u.pathname.endsWith('/calendar')) return Promise.resolve({ events: mockEvents(), children:[{id:'C01',name:'長男'},{id:'C02',name:'次男'}] });
@@ -358,6 +429,7 @@ $("#fdApply").addEventListener('click', applyFilters);
 function openFilterDialog(){
   // 現在の選択値をモーダルのセレクトに反映（初回はデフォルトall）
   const dlg = $("#filterDialog");
+  renderFilterGroups();  // ← 追加
   // 初回は子ども選択肢を埋める
   if ($("#fdChild").options.length <= 1 && state.children.length) {
     state.children.forEach(c=>{
@@ -370,6 +442,13 @@ function openFilterDialog(){
 }
 
 function applyFilters(){
+  // グループ選択を収集して保存（空配列＝全選択扱い）
+  const box = document.getElementById('fdGroups');
+  if (box) {
+    const selected = [...box.querySelectorAll('input[type="checkbox"]:checked')].map(cb=>cb.value);
+    state.filters.groups = selected;
+    saveJSON(LS_KEYS.GROUPS_SELECTED, state.filters.groups);
+  }
   // 次回fetchで参照できるよう、値はDOMに残す（IDを fdChild/fdType に変更）
   $("#filterDialog").close();
   calendar?.refetchEvents();
@@ -417,6 +496,8 @@ function bindIconMenus() {
         const target = document.querySelector(sel);
         if (target) {
           sd.close();
+          // ★グループダイアログを開く直前に一覧をレンダリング
+          if (target.id === 'groupDialog') renderGroupManagerList();
           if (typeof target.showModal === 'function') target.showModal();
           else target.setAttribute('open','');
         } else {
@@ -431,3 +512,67 @@ function bindIconMenus() {
 document.addEventListener('DOMContentLoaded', () => {
   bindIconMenus();
 });
+
+
+function mockFetch(url, options){
+  const u = new URL(url, location.origin);
+
+  // 追加: /groups
+  if (u.pathname.endsWith('/groups')) {
+    // 今はローカルの state.groups を返す
+    return Promise.resolve({ groups: state.groups.map((name, i)=>({ id: String(i+1), name })) });
+  }
+
+  if (u.pathname.endsWith('/calendar')) return Promise.resolve({ events: mockEvents(), children:[{id:'C01',name:'長男'},{id:'C02',name:'次男'}] });
+  if (u.pathname.endsWith('/children')) return Promise.resolve({ children:[{id:'C01',name:'長男'},{id:'C02',name:'次男'}] });
+  if (u.pathname.includes('/rsvp')) return Promise.resolve({ ok:true });
+  return Promise.resolve({});
+}
+
+function renderFilterGroups(){
+  const box = document.getElementById('fdGroups');
+  if (!box) return;
+  box.innerHTML = '';
+  // // なければ「未設定」を表示
+  // if (!state.groups || state.groups.length === 0) {
+  //   box.innerHTML = '<span style="color:var(--muted)">（グループ未登録）</span>';
+  //   return;
+  // }
+
+  const selected = Array.isArray(state.filters.groups) ? state.filters.groups : [];
+
+  // まず「未設定」特別チップ
+  const chip0 = document.createElement('label');
+  chip0.className = 'chip';
+  chip0.innerHTML = `
+    <input type="checkbox" value="__UNGROUPED__">
+    <span>未設定</span>
+  `;
+  chip0.querySelector('input').checked = selected.length === 0 ? true : selected.includes('__UNGROUPED__');
+  box.appendChild(chip0);
+
+  // 2) 登録済みグループがなければここで終わり
+  if (!state.groups || state.groups.length === 0) {
+    return;
+  }
+
+  state.groups.forEach(name=>{
+    const id = `g_${name}`;
+    const wrap = document.createElement('label');
+    wrap.className = 'chip';
+    wrap.innerHTML = `
+      <input type="checkbox" id="${id}" value="${escapeHtml(name)}">
+      <span>${escapeHtml(name)}</span>
+    `;
+    const cb = wrap.querySelector('input');
+    cb.checked = state.filters.groups.length === 0
+      ? true  // 何も選んでいない＝全選択扱い
+      : state.filters.groups.includes(name);
+    box.appendChild(wrap);
+  });
+}
+
+function normalizeGroup(name){
+  if (!name) return "__UNGROUPED__";
+  return state.groups.includes(name) ? name : "__UNGROUPED__";
+}

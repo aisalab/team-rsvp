@@ -137,3 +137,10 @@ margin-left:0px !important;
 }
 
 
+.fd-groups { display:flex; flex-wrap:wrap; gap:8px; max-width:100%; }
+.fd-groups .chip {
+  display:inline-flex; align-items:center; gap:6px;
+  border:1px solid var(--line); background:#fff; color:var(--text);
+  border-radius:999px; padding:6px 10px; font-size:12px;
+}
+.fd-groups .chip input { transform: translateY(1px); }
