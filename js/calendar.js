@@ -18,7 +18,9 @@ export function initCalendar(){
     fixedWeekCount: true,
     headerToolbar: false,
     dayCellContent: (arg)=> arg.date.getDate(),
-    datesSet: updateMonthLabel,
+    //datesSet: updateMonthLabel,
+    // 表示月が変わるたびに「年月」表示を更新
+    datesSet: (info) => updateMonthLabel(info),
     events: fetchEvents,
     eventContent: renderEventContent,
     eventClick: (info)=> {
@@ -38,7 +40,9 @@ export function initCalendar(){
     },
   });
   calendar.render();
-  updateMonthLabel();
+  //updateMonthLabel();
+  //updateMonthLabel({ start: calendar.getDate() });
+  updateMonthLabel({ view: calendar.view });
 
   // フィルタ変更で再取得
   document.addEventListener('filters:changed', ()=> calendar?.refetchEvents());
@@ -46,10 +50,19 @@ export function initCalendar(){
   return calendar; // ← 追加：インスタンスを返す
 }
 
-function updateMonthLabel(){
-  const d = calendar.getDate();
-  $("#monthLabel").textContent = `${d.getFullYear()}年 ${d.getMonth()+1}月`;
-}
+// function updateMonthLabel(arg){
+//   //const d = calendar.getDate();
+//   // datesSet から渡る start を優先、なければ現在日付
+//  const d = arg?.start || calendar.getDate();
+//   $("#monthLabel").textContent = `${d.getFullYear()}年 ${d.getMonth()+1}月`;
+// }
+function updateMonthLabel(info){
+  // 月ラベルは「ビューの先頭日」で判定する（前月末に引っ張られない）
+  const d = info?.view?.currentStart || calendar.getDate();
+  const y = d.getFullYear();
+  const m = d.getMonth() + 1; // getMonth() は 0 始まりなので +1 でOK
+  $("#monthLabel").textContent = `${y}年 ${m}月`;
+ }
 
 async function fetchEvents(info, success, failure){
   try {

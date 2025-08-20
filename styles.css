@@ -113,7 +113,7 @@ margin-left:0px !important;
   display: flex;
   align-items: center;
   justify-content: space-between; /* 左右に分ける */
-  padding: 12px 16px;
+  padding: 12px 6px;
   border-bottom: 1px solid var(--line);
   background: var(--panel);
 }
@@ -121,11 +121,12 @@ margin-left:0px !important;
 .toolbar-left {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
+  padding: 0px 6px;
 }
 
 .toolbar-left h2 {
-  margin: 0 8px;
+  margin: 0 0px;
   text-align: center;
   min-width: 10ch;
 }
@@ -144,3 +145,16 @@ margin-left:0px !important;
   border-radius:999px; padding:6px 10px; font-size:12px;
 }
 .fd-groups .chip input { transform: translateY(1px); }
+
+#todayBtn { white-space: nowrap; }    /* モバイルでの折返し防止 */
+
+#todayBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 20px; /* アイコンサイズ */
+  color: #333;
+}
+#todayBtn:hover {
+  color: #007bff; /* ホバー時に青く */
+}

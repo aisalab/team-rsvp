@@ -43,6 +43,7 @@ async function init(){
     // UI バインド（作成済み cal を使う）
     $("#prevBtn")?.addEventListener('click', ()=> cal.prev());
     $("#nextBtn")?.addEventListener('click', ()=> cal.next());
+    $("#todayBtn")?.addEventListener('click', ()=> cal.today());  // ← 追加
     bindEventDialog();
     bindFilterUI();
     bindGroupUI(); 
