@@ -19,6 +19,35 @@ export function normalizeGroup(name){
   return state.groups.includes(name) ? name : '__UNGROUPED__';
 }
 
+export async function apiListGroups(teamId){
+  const r = await safeFetch(`${BASE_URL}/groups?teamId=${encodeURIComponent(teamId)}`);
+//  return r.groups || [];
+  const raw = r.groups || [];
+  // 文字列 or {name} の両方に対応して正規化
+  return raw.map(g => (typeof g === 'string' ? g : g?.name)).filter(Boolean);
+}
+
+export async function apiAddGroup(teamId, name){
+  return safeFetch(`${BASE_URL}/groups`, {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ teamId, name })
+  });
+}
+
+export async function apiDeleteGroup(teamId, name){
+  return safeFetch(`${BASE_URL}/groups/${encodeURIComponent(name)}?teamId=${encodeURIComponent(teamId)}`, {
+    method: 'DELETE'
+  });
+}
+
+export async function apiRenameGroup(teamId, oldName, newName){
+  return safeFetch(`${BASE_URL}/groups/${encodeURIComponent(oldName)}`, {
+    method: 'PATCH', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ teamId, newName })
+  });
+}
+
+
 // ---- モック ----
 function mockEvents(){
   const base = new Date(); base.setHours(9,0,0,0);
