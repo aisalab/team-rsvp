@@ -2,10 +2,12 @@
 import { LIFF_ID } from './config.js';
 import { $, toast } from './utils.js';
 import { state, storage } from './state.js';
-import { initCalendar } from './calendar.js';
-import { bindEventDialog } from './ui.events.js';
+import { initCalendar,refetchCalendar } from './calendar.js';
+import { bindEventDialog, bindEventDialogUI } from './ui.events.js';
 import { bindFilterUI } from './ui.filters.js';
 import { bindGroupUI } from './ui.groups.js';
+import { bindItemsUI } from './ui.items.js';
+import { bindMyGroupsUI } from './ui.mygroups.js';
 
 document.addEventListener('DOMContentLoaded', init);
 
@@ -16,6 +18,9 @@ async function init(){
     if (!liff.isLoggedIn()) { liff.login({}); return; }
     const profile = await liff.getProfile();
     state.profile = profile || state.profile;
+
+    import('./state.js').then(({ setUserId }) => setUserId(profile.userId));
+
     $("#userName").textContent = state.profile.displayName || '保護者';
     if (state.profile.pictureUrl) $("#userAvatar").src = state.profile.pictureUrl;
   } catch (e) {
@@ -32,11 +37,6 @@ async function init(){
   }
 
   // UI バインド
-//   $("#prevBtn")?.addEventListener('click', ()=> window.__calendar?.prev?.());
-//   $("#nextBtn")?.addEventListener('click', ()=> window.__calendar?.next?.());
-//   bindEventDialog();
-//   bindFilterUI();
-//   bindGroupUI();
     // カレンダーを先に作って返り値を受け取る
     const cal = initCalendar();
 
@@ -47,6 +47,9 @@ async function init(){
     bindEventDialog();
     bindFilterUI();
     bindGroupUI(); 
+    bindItemsUI();
+    bindMyGroupsUI(); 
+    bindEventDialogUI();   // ← 追加：作成/RSVPダイアログのバインド
 
     // 設定ダイアログの開閉をここで面倒見る
     const settingsBtn = $("#settingsBtn");
@@ -58,8 +61,8 @@ async function init(){
     });
     $("#sdClose")?.addEventListener('click', ()=> settingsDialog?.close());
 
-  // カレンダー
-  initCalendar();
+//   // カレンダー
+//   initCalendar();
 
-  toast('準備できました');
+//   toast('準備できました');
 }

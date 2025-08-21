@@ -21,14 +21,26 @@
     <div class="user">
       <img id="userAvatar" class="avatar" alt="avatar" />
       <span id="userName"></span>
+      <!-- 設定（設定メニューを開く） -->
+      <button id="settingsBtn" class="icon-btn" type="button" aria-label="設定">
+        <!-- gear icon -->
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+          <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm8.94-4.46-.92-.53c.06-.33.08-.68.08-1.01s-.02-.68-.08-1.01l.92-.53a1 1 0 0 0 .37-1.37l-1-1.73a1 1 0 0 0-1.28-.43l-1.07.45a7.8 7.8 0 0 0-1.75-1.01l-.16-1.15A1 1 0 0 0 14.1 1h-2.2a1 1 0 0 0-.99.86l-.16 1.15c-.62.24-1.2.56-1.75 1.01l-1.07-.45a1 1 0 0 0-1.28.43l-1 1.73a1 1 0 0 0 .37 1.37l.92.53c-.06.33-.08.68-.08 1.01s.02.68.08 1.01l-.92.53a1 1 0 0 0-.37 1.37l1 1.73a1 1 0 0 0 1.28.43l1.07-.45c.55.45 1.13.77 1.75 1.01l.16 1.15a1 1 0 0 0 .99.86h2.2a1 1 0 0 0 .99-.86l.16-1.15c.62-.24 1.2-.56 1.75-1.01l1.07.45a1 1 0 0 0 1.28-.43l1-1.73a1 1 0 0 0-.37-1.37Z" fill="currentColor"></path>
+        </svg>
+      </button>
+
     </div>
+
   </header>
 
   <section class="toolbar">
     <div class="toolbar-left">
+      <!-- ヘッダーのナビ区域（次月ボタン等の近く）に追加 -->
+      <button id="addEventBtn" aria-label="イベント追加">＋</button>
       <button id="todayBtn" title="当月へ戻る">
         <i class="fa-solid fa-calendar-day"></i>
       </button>
+
       <button id="prevBtn" aria-label="前の月">◀</button>
       <h2 id="monthLabel">—</h2>
       <button id="nextBtn" aria-label="次の月">▶</button>
@@ -43,13 +55,6 @@
         </svg>
       </button>
 
-      <!-- 設定（設定メニューを開く） -->
-      <button id="settingsBtn" class="icon-btn" type="button" aria-label="設定">
-        <!-- gear icon -->
-        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-          <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm8.94-4.46-.92-.53c.06-.33.08-.68.08-1.01s-.02-.68-.08-1.01l.92-.53a1 1 0 0 0 .37-1.37l-1-1.73a1 1 0 0 0-1.28-.43l-1.07.45a7.8 7.8 0 0 0-1.75-1.01l-.16-1.15A1 1 0 0 0 14.1 1h-2.2a1 1 0 0 0-.99.86l-.16 1.15c-.62.24-1.2.56-1.75 1.01l-1.07-.45a1 1 0 0 0-1.28.43l-1 1.73a1 1 0 0 0 .37 1.37l.92.53c-.06.33-.08.68-.08 1.01s.02.68.08 1.01l-.92.53a1 1 0 0 0-.37 1.37l1 1.73a1 1 0 0 0 1.28.43l1.07-.45c.55.45 1.13.77 1.75 1.01l.16 1.15a1 1 0 0 0 .99.86h2.2a1 1 0 0 0 .99-.86l.16-1.15c.62-.24 1.2-.56 1.75-1.01l1.07.45a1 1 0 0 0 1.28-.43l1-1.73a1 1 0 0 0-.37-1.37Z" fill="currentColor"></path>
-        </svg>
-      </button>
     </div>
   </section>
 
@@ -102,11 +107,10 @@
       </header>
       <div class="sd-body">
         <ul class="settings-list">
-          <li>
-            <button type="button" class="settings-item" data-open="#groupDialog">
-              グループ管理を開く
-            </button>
-          </li>
+          <li><button type="button" class="settings-item" data-open="#myGroupsDialog">所属グループ</button></li>
+          <li></li>
+          <li><button type="button" class="settings-item" data-open="#groupDialog">グループ管理</button></li>
+          <li><button type="button" class="settings-item" data-open="#itemsDialog">荷物管理</button></li>
           <!-- 将来の設定項目もここに追加していけます -->
           <!-- <li><button type="button" class="settings-item">通知設定</button></li> -->
         </ul>
@@ -127,6 +131,8 @@
       <div class="fd-body">
         <label class="fd-row">
           <span>グループ</span>
+  <input id="fltMyGroupsOnly" type="checkbox">
+  自分のグループのみ表示
           <div id="fdGroups" class="fd-groups"></div>
         </label>
         <label class="fd-row">
@@ -152,6 +158,24 @@
     </form>
   </dialog>
 
+  <!-- 所属グループ ダイアログ -->
+  <dialog id="myGroupsDialog">
+    <form method="dialog" class="dialog">
+      <header>
+        <h3>所属グループの設定</h3>
+        <button id="mgClose" value="cancel" aria-label="閉じる">✕</button>
+      </header>
+      <div class="mg-body">
+        <p>あなたが所属するグループを選択してください（複数可）</p>
+        <ul id="mgList" class="mg-list"></ul>
+      </div>
+      <footer class="actions">
+        <button id="mgSave" type="button">保存</button>
+        <button value="cancel">閉じる</button>
+      </footer>
+    </form>
+  </dialog>
+
   <!-- グループ管理ダイアログ -->
   <dialog id="groupDialog">
     <form method="dialog" class="dialog">
@@ -171,6 +195,101 @@
       </footer>
     </form>
   </dialog>
+
+  <!-- 荷物管理ダイアログ -->
+  <dialog id="itemsDialog">
+    <form method="dialog" class="dialog">
+      <header>
+        <h3>荷物管理</h3>
+        <button id="idClose" value="cancel" aria-label="閉じる">✕</button>
+      </header>
+
+      <div class="im-body">
+        <div class="im-add">
+          <input id="imName" type="text" placeholder="荷物名（例：ビブス）">
+          <input id="imQty" type="number" min="0" step="1" value="0" aria-label="数量">
+          <button id="imAddBtn" type="button">追加</button>
+        </div>
+        <ul id="imList" class="im-list"></ul>
+      </div>
+
+      <footer class="actions">
+        <button value="cancel">閉じる</button>
+      </footer>
+    </form>
+  </dialog>
+
+<!-- イベント作成/編集 -->
+<dialog id="eventEditDialog">
+  <form method="dialog" class="dialog">
+    <header>
+      <h3 id="eedTitle">スケジュール作成</h3>
+      <button id="eedClose" value="cancel" aria-label="閉じる">✕</button>
+    </header>
+
+    <div class="eed-body">
+      <label>タイトル<input id="evTitle" type="text" placeholder="例：練習試合"></label>
+
+      <div class="row">
+        <label class="inline"><input id="evAllDay" type="checkbox"> 終日</label>
+      </div>
+
+      <div class="row">
+        <label>開始 <input id="evStart" type="datetime-local"></label>
+        <label class="ml">終了 <input id="evEnd" type="datetime-local"></label>
+      </div>
+
+      <label>場所<input id="evPlace" type="text" placeholder="例：市営グラウンドA"></label>
+      <label>メモ<textarea id="evNote" rows="3" placeholder="持ち物・集合時間など"></textarea></label>
+
+      <div class="row">
+        <label>対象グループ
+          <select id="evGroups" multiple size="5"></select>
+        </label>
+      </div>
+
+      <fieldset class="rsvp-box">
+        <legend>出欠をとる</legend>
+        <label class="inline"><input id="evNeedRsvp" type="checkbox" checked> 出欠確認を有効にする</label>
+        <label>回答期限 <input id="evDeadline" type="datetime-local"></label>
+      </fieldset>
+    </div>
+
+    <footer class="actions">
+      <button id="eedSave" type="button">保存</button>
+      <button value="cancel">キャンセル</button>
+    </footer>
+  </form>
+</dialog>
+
+<!-- 出欠回答 -->
+<dialog id="rsvpDialog">
+  <form method="dialog" class="dialog">
+    <header>
+      <h3 id="rdTitle">出欠回答</h3>
+      <button id="rdClose" value="cancel" aria-label="閉じる">✕</button>
+    </header>
+
+    <div class="rd-body">
+      <div id="rdWhenWhere" class="muted small"></div>
+
+      <div class="row">
+        <label class="inline"><input type="radio" name="rsvpStatus" value="○" checked> 出席（○）</label>
+        <label class="inline"><input type="radio" name="rsvpStatus" value="△"> 調整中（△）</label>
+        <label class="inline"><input type="radio" name="rsvpStatus" value="×"> 欠席（×）</label>
+      </div>
+
+      <label>メモ（任意）
+        <textarea id="rdNote" rows="3" placeholder="遅刻・早退など"></textarea>
+      </label>
+    </div>
+
+    <footer class="actions">
+      <button id="rdSubmit" type="button">送信</button>
+      <button value="cancel">閉じる</button>
+    </footer>
+  </form>
+</dialog>
 
 
 </body>

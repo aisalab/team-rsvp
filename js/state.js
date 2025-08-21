@@ -11,8 +11,16 @@ export const state = {
   children: [],
   eventsCache: new Map(),
   groups: loadJSON(LS_KEYS.GROUPS, []),
+  myGroupsOnly: false,
   filters: { groups: loadJSON(LS_KEYS.GROUPS_SELECTED, []) }
 };
+
+//　ユーザ情報の取得・セット
+export function setUserId(uid){ state.userId = uid; }
+
+export function getUserHeader(){
+  return state.userId ? { 'x-line-userid': state.userId } : {};
+}
 
 export const storage = {
   saveGroups: (arr)=> { localStorage.setItem(LS_KEYS.GROUPS, JSON.stringify(arr)); },

@@ -4,6 +4,7 @@ import { TEAM_ID,BASE_URL } from './config.js';
 import { state } from './state.js';
 import { safeFetch, normalizeGroup } from './api.js';
 import { openEventDialog } from './ui.events.js';
+import { openRsvpDialog } from './ui.events.js';
 
 let calendar;
 
@@ -37,6 +38,18 @@ export function initCalendar(){
         my: info.event.extendedProps.my
       };
       openEventDialog(evId, pre);
+        eventClick: (info)=>{
+    const ev = info.event;
+    // 必要な最小情報だけ組み立て
+    openRsvpDialog({
+      id: ev.id,
+      title: ev.title,
+      start: ev.start,
+      end: ev.end,
+      allDay: ev.allDay,
+      place: ev.extendedProps?.place
+    });
+  }
     },
   });
   calendar.render();
@@ -112,4 +125,30 @@ async function fetchEvents(info, success, failure){
 function renderEventContent(arg){
   const title = escapeHtml(arg.event.title || '');
   return { html: `<div class="fc-ev"><span class="title">${title}</span></div>` };
+}
+
+// fetchEvents の最後でクライアントフィルタ
+function applyClientFilters(events){
+  const { groups: selected, statuses, hideAbsent, myGroupsOnly } = state.filters || {};
+  const myGroups = state.myGroups || [];
+
+  return events.filter(ev=>{
+    const g = normalizeGroup(ev.group); // 既存の未設定扱いロジック
+    // グループ選択フィルタ
+    if (selected && selected.length && !selected.includes(g) && g!=='(未設定)') return false;
+    // 「自分のグループのみ」
+    if (myGroupsOnly && myGroups.length){
+      if (!g || g==='(未設定)' || !myGroups.includes(g)) return false;
+    }
+    // 出欠フィルタ（既存）
+    if (hideAbsent && ev.status==='×') return false;
+    return true;
+  });
+}
+
+// 外部からイベントを再取得してカレンダーをリロード
+export async function refetchCalendar(){
+  if (calendarInstance) {
+    await calendarInstance.refetchEvents();
+  }
 }

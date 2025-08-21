@@ -157,3 +157,48 @@ margin-left:0px !important;
 #todayBtn:hover {
   color: #007bff; /* ホバー時に青く */
 }
+
+
+/* Items dialog */
+/* 荷物管理ダイアログ */
+#itemsDialog .im-body { padding: 8px 0; }
+#itemsDialog .im-add {
+  display: grid;
+  grid-template-columns: 1fr 30px auto;
+  gap: 8px;
+  margin: 8px 0 12px;
+}
+#itemsDialog .im-list { list-style: none; padding: 0; margin: 0; }
+#itemsDialog .im-list li {
+  display: grid;
+  grid-template-columns: 1fr 30px auto;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid #eee;
+}
+#itemsDialog .im-list .im-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#itemsDialog .im-list .im-qty input[type="number"] { width: 100%; }
+#itemsDialog .im-list .im-ops button { margin-right: 6px; }
+
+/* myGroups dialog */
+#myGroupsDialog .mg-list { list-style:none; padding:0; margin:8px 0; }
+#myGroupsDialog .mg-list li { display:flex; gap:8px; align-items:center; padding:6px 0; }
+
+
+/* 追加ボタン */
+#addEventBtn { margin-left: 8px; padding: 6px 10px; border-radius: 8px; }
+
+/* Event Edit dialog */
+#eventEditDialog .eed-body label { display:block; margin:8px 0; }
+#eventEditDialog .row { display:flex; gap:12px; align-items:center; }
+#eventEditDialog .row .ml { margin-left: 8px; }
+#eventEditDialog input[type="text"],
+#eventEditDialog input[type="datetime-local"],
+#eventEditDialog textarea,
+#eventEditDialog select { width: 100%; }
+#eventEditDialog .inline { display:inline-flex; align-items:center; gap:6px; }
+#eventEditDialog .rsvp-box { margin-top: 8px; border: 1px solid #eee; padding: 8px; border-radius: 8px; }
+
+#rsvpDialog .muted.small { color:#666; font-size: 0.9em; margin-bottom:8px; }
+#rsvpDialog .row { display:flex; gap:12px; align-items:center; margin:8px 0; }

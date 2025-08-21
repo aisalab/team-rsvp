@@ -1,6 +1,8 @@
 // 通信（safeFetch）とモック、グループ正規化
 import { state } from './state.js';
 import { BASE_URL } from './config.js';
+import { getUserHeader } from './state.js'; // ← 既に userId を知る仕組みがあればそこから。無ければ後述。
+
 
 export async function safeFetch(url, options={}){
   try {
@@ -14,6 +16,28 @@ export async function safeFetch(url, options={}){
   }
 }
 
+
+//　ユーザのグループ
+export async function apiGetMe(teamId){
+  const r = await fetch(`${BASE_URL}/me?teamId=${encodeURIComponent(teamId)}`, {
+    headers: { ...getUserHeader() }
+  });
+  if(!r.ok) throw new Error(`${r.status}`);
+  return await r.json(); // {userId, groups:[]}
+}
+
+export async function apiSetMyGroups(teamId, groups, displayName=''){
+  const r = await fetch(`${BASE_URL}/me/groups`, {
+    method: 'PATCH',
+    headers: { 'Content-Type':'application/json', ...getUserHeader() },
+    body: JSON.stringify({ teamId, groups, displayName })
+  });
+  if(!r.ok) throw new Error(`${r.status}`);
+  return await r.json(); // {ok:true}
+}
+
+
+//　グループ
 export function normalizeGroup(name){
   if (!name) return '__UNGROUPED__';
   return state.groups.includes(name) ? name : '__UNGROUPED__';
@@ -46,6 +70,58 @@ export async function apiRenameGroup(teamId, oldName, newName){
     body: JSON.stringify({ teamId, newName })
   });
 }
+
+//　荷物
+export async function apiListItems(teamId){
+  const r = await safeFetch(`${BASE_URL}/items?teamId=${encodeURIComponent(teamId)}`);
+  // 正規化（name, qty）
+  return (r.items || []).map(it => ({
+    name: String(it.name || ''),
+    qty: Number(it.qty || 0)
+  }));
+}
+
+export async function apiAddItem(teamId, name, qty){
+  return safeFetch(`${BASE_URL}/items`, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ teamId, name, qty })
+  });
+}
+
+export async function apiUpdateItem(teamId, oldName, { qty, newName }){
+  return safeFetch(`${BASE_URL}/items/${encodeURIComponent(oldName)}`, {
+    method: 'PATCH',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ teamId, qty, newName })
+  });
+}
+
+export async function apiDeleteItem(teamId, name){
+  return safeFetch(`${BASE_URL}/items/${encodeURIComponent(name)}?teamId=${encodeURIComponent(teamId)}`, {
+    method: 'DELETE'
+  });
+}
+
+
+// イベント作成
+export async function apiCreateEvent(teamId, payload){
+  return safeFetch(`${BASE_URL}/events`, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ teamId, ...payload })
+  });
+}
+
+// 出欠回答
+export async function apiSendRsvp(teamId, eventId, status, note){
+  return safeFetch(`${BASE_URL}/rsvp`, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ teamId, eventId, status, note })
+  });
+}
+
 
 
 // ---- モック ----

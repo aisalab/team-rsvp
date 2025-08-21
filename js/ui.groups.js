@@ -10,6 +10,7 @@ export function bindGroupUI(){
     const btn = e.target.closest('[data-open="#groupDialog"]');
     if (!btn) return;
     e.preventDefault();
+    
     await refreshGroups();      // ← Firestoreから最新取得
     renderGroupManagerList();
     const dlg = $("#groupDialog");

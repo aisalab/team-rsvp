@@ -6,6 +6,17 @@ export function bindFilterUI(){
   $("#filterBtn")?.addEventListener('click', openFilterDialog);
   $("#fdClose")?.addEventListener('click', () => $("#filterDialog").close());
   $("#fdApply")?.addEventListener('click', applyFilters);
+
+  const box = document.getElementById('fltMyGroupsOnly');
+  if (box){
+    box.checked = !!state.filters.myGroupsOnly;
+    box.addEventListener('change', ()=>{
+      state.filters.myGroupsOnly = box.checked;
+      storage.saveFilters?.(state.filters); // 既存の保存があれば
+      document.dispatchEvent(new CustomEvent('filters:changed'));
+    });
+  }
+
 }
 
 export function openFilterDialog(){
